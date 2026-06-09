@@ -1,5 +1,68 @@
 [
-  {"lessonId":"getting-started-what-is-java","q":"What does WORA mean?","opts":["Write Once, Run Anywhere","Work On Reliable Apps","Write Often, Refactor Always"],"ans":0},
-  {"lessonId":"hello-world","q":"Which method signature is the Java entry point?","opts":["public void main()","public static void main(String[] args)","static void start()"],"ans":1},
-  {"lessonId":"oop-classes-objects","q":"Which keyword refers to the current object?","opts":["self","this","me"],"ans":1}
+  {
+    "lessonId": "getting-started-what-is-java",
+    "q": "What does WORA mean?",
+    "opts": ["Write Once, Run Anywhere", "Work On Reliable Apps", "Write Often, Refactor Always"],
+    "ans": 0
+  },
+  {
+    "lessonId": "hello-world",
+    "q": "Which method signature is the Java entry point?",
+    "opts": [
+      "public void main()",
+      "public static void main(String[] args)",
+      "static void start()"
+    ],
+    "ans": 1
+  },
+  {
+    "lessonId": "data-types",
+    "q": "Which of these is a primitive type in Java?",
+    "opts": ["String", "ArrayList", "boolean"],
+    "ans": 2
+  },
+  {
+    "lessonId": "strings",
+    "q": "Why are Strings considered immutable?",
+    "opts": [
+      "Their characters cannot be changed after creation",
+      "They are stored only in files",
+      "They can only hold uppercase letters"
+    ],
+    "ans": 0
+  },
+  {
+    "lessonId": "oop-classes-objects",
+    "q": "Which keyword refers to the current object?",
+    "opts": ["self", "this", "me"],
+    "ans": 1
+  },
+  {
+    "lessonId": "collections",
+    "q": "Which structure is best for key-value lookups?",
+    "opts": ["ArrayList", "HashMap", "LinkedList"],
+    "ans": 1
+  },
+  {
+    "lessonId": "generics",
+    "q": "What problem do generics solve?",
+    "opts": [
+      "They make code unsafe but shorter",
+      "They improve type safety and reduce casts",
+      "They remove the need for classes"
+    ],
+    "ans": 1
+  },
+  {
+    "lessonId": "jvm-internals",
+    "q": "What does the JVM run after compilation?",
+    "opts": ["Native machine code directly from source", "Bytecode", "Python modules"],
+    "ans": 1
+  },
+  {
+    "lessonId": "concurrency-threads",
+    "q": "What is a common concurrency risk with shared mutable state?",
+    "opts": ["Race conditions", "Syntax highlighting", "Garbage collection speedups"],
+    "ans": 0
+  }
 ]

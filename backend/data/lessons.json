@@ -1,18 +1,192 @@
 [
-  {"id":"getting-started-what-is-java","title":"What is Java?","tagline":"The language that runs everywhere","content":["Java was created by James Gosling at Sun Microsystems in 1995. Today it powers Android apps, banking systems, Netflix, Amazon, and Spring Boot backends.","The three essential components: JDK (Java Development Kit), JRE (Java Runtime Environment), and JVM (Java Virtual Machine)."],"code":"public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Java is everywhere! ☕\");\n    }\n}"},
-  {"id":"hello-world","title":"Hello, World!","tagline":"Your very first Java program — dissected","content":["In Java, every piece of code must live inside a class. The class name must match the filename.","Breaking down public static void main(String[] args) — the JVM entry point."],"code":"public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}"},
-  {"id":"data-types","title":"Variables & Data Types","tagline":"Java's typed boxes for storing data","content":["Java has 8 primitive types: byte, short, int, long, float, double, char, boolean.","Reference types live on the heap: String, arrays, and objects you create."],"code":"public class DataTypes {\n    public static void main(String[] args) {\n        int age = 25;\n        double pi = 3.14159;\n        String name = \"Student\";\n        System.out.println(name + ", age: " + age);\n    }\n}"},
-  {"id":"operators","title":"Operators","tagline":"Arithmetic and logical operators","content":["Java supports arithmetic (+ - * / %), comparison (== != > < >= <=), and logical (&& || !) operators.","Be careful with integer division: 7 / 2 == 3 in Java; use 7.0 / 2 for decimal division."],"code":"public class Operators {\n    public static void main(String[] args) {\n        System.out.println(7/2); // 3\n        System.out.println(7.0/2); // 3.5\n    }\n}"},
-  {"id":"strings","title":"Strings","tagline":"Immutable text and StringBuilder","content":["Strings in Java are immutable — methods like toUpperCase() return a new String.","Use StringBuilder for efficient concatenation in loops."],"code":"public class Strings {\n    public static void main(String[] args) {\n        String s = \"hello\";\n        System.out.println(s.toUpperCase());\n    }\n}"},
-  {"id":"control-flow","title":"If/Else & Switch","tagline":"Decision making","content":["if/else chains and switch statements control program flow.","Use modern switch expressions (Java 14+) to avoid fall-through bugs."],"code":"public class ControlFlow {\n    public static void main(String[] args) {\n        int score = 85;\n        if (score >= 90) System.out.println(\"A\");\n    }\n}"},
-  {"id":"loops","title":"Loops","tagline":"for, while, do-while, for-each","content":["Loops let you repeat actions. for-each is best when you don't need the index.","Watch for infinite loops if the exit condition never becomes false."],"code":"public class Loops {\n    public static void main(String[] args) {\n        for (int i=1;i<=5;i++) System.out.println(i);\n    }\n}"},
-  {"id":"arrays","title":"Arrays & Methods","tagline":"Storing sequences and organizing behavior","content":["Arrays are fixed-size sequences. Use methods to structure behavior and visualize the call stack.","Pass-by-value for primitives, object references are passed by value of the reference."],"code":"public class ArraysMethods {\n    public static void main(String[] args) {\n        int[] a = {10,20,30};\n        System.out.println(a[1]);\n    }\n}"},
-  {"id":"oop-classes-objects","title":"Classes & Objects","tagline":"Blueprints and instances","content":["A class defines fields and methods; objects are instances. Use private fields and public getters/setters to encapsulate.","Constructors initialize new objects and this refers to the instance."],"code":"public class BankAccount {\n    private String owner;\n    private double balance;\n    public BankAccount(String owner,double initial){ this.owner=owner; this.balance=initial; }\n    public void deposit(double amt){ if(amt<=0) throw new IllegalArgumentException(\"Must be positive\"); balance+=amt; }\n    public boolean withdraw(double amt){ if(amt>balance) return false; balance-=amt; return true; }\n    public double getBalance(){ return balance; }\n}\n\npublic class Main{\n    public static void main(String[] args){\n        BankAccount alice = new BankAccount(\"Alice\",1000.0);\n        alice.deposit(250);\n        alice.withdraw(100);\n        System.out.println(alice.getBalance());\n    }\n}"},
-  {"id":"oop-inheritance","title":"Inheritance & Polymorphism","tagline":"Reuse and specialize behavior","content":["Inheritance allows a subclass to extend a superclass. Polymorphism lets you treat subclasses as their parent type.","Prefer composition over inheritance for flexible designs."],"code":"public class Vehicle { public void drive(){ System.out.println(\"Driving\"); } }\npublic class Car extends Vehicle { @Override public void drive(){ System.out.println(\"Car driving\"); } }\npublic class Main{ public static void main(String[] args){ Vehicle v = new Car(); v.drive(); } }"},
-  {"id":"collections","title":"Collections Intro","tagline":"List, Set, Map basics","content":["Learn ArrayList, LinkedList, HashMap, HashSet and when to use each.","Collections framework provides common interfaces and implementations for working with groups of objects."],"code":"import java.util.*;\npublic class CollectionsIntro{ public static void main(String[] args){ List<String> l = new ArrayList<>(); l.add(\"a\"); System.out.println(l.get(0)); } }"},
-  {"id":"exceptions","title":"Exceptions","tagline":"Handling errors gracefully","content":["Use try/catch/finally to handle exceptions. Throw custom exceptions for domain errors.","Understand checked vs unchecked exceptions."],"code":"public class ExceptionsDemo{ public static void main(String[] args){ try{ int x = 1/0; } catch(Exception e){ System.out.println(\"Error: \"+e.getMessage()); } } }"},
-  {"id":"file-io","title":"File I/O","tagline":"Read and write files safely","content":["Use Files, BufferedReader, BufferedWriter, and try-with-resources to manage resources.","Prefer NIO (Files and Path) for modern file operations."],"code":"import java.nio.file.*;\npublic class FileIO{ public static void main(String[] args) throws Exception{ Files.writeString(Path.of(\"note.txt\"), \"hello\"); System.out.println(Files.readString(Path.of(\"note.txt\"))); } }"}
-  ,{"id":"streams-lambdas","title":"Streams & Lambdas","tagline":"Functional-style processing of collections","content":["Streams let you process collections with map/filter/reduce operations in a declarative style.","Lambdas are short anonymous functions — use them to pass behavior into methods."],"code":"import java.util.*;import java.util.stream.*;\npublic class StreamsDemo{ public static void main(String[] args){ List<Integer> nums = List.of(1,2,3,4,5); int sum = nums.stream().filter(n->n%2==1).mapToInt(Integer::intValue).sum(); System.out.println(sum); } }"}
-  ,{"id":"concurrency-threads","title":"Concurrency & Threads","tagline":"Running work in parallel safely","content":["Use Thread, Runnable, and higher-level constructs from java.util.concurrent for concurrency.","Prefer Executors, avoid shared mutable state, and use synchronization or concurrent data structures."],"code":"import java.util.concurrent.*;\npublic class ConcurrencyDemo{ public static void main(String[] args) throws Exception{ ExecutorService ex = Executors.newFixedThreadPool(2); ex.submit(()-> System.out.println(\"Hello from thread\")); ex.shutdown(); ex.awaitTermination(1, java.util.concurrent.TimeUnit.SECONDS); } }"}
-  ,{"id":"build-tools","title":"Build Tools: Maven & Gradle","tagline":"Building and managing Java projects","content":["Maven and Gradle automate compilation, testing, and dependency management.","Learn basic pom.xml or build.gradle structure and common lifecycle commands."],"code":"<!-- Example: run tests with Maven -->\n<!-- mvn test -->"}
+  {
+    "id": "getting-started-what-is-java",
+    "title": "What is Java?",
+    "tagline": "The language that runs everywhere",
+    "content": [
+      "Java was created by James Gosling at Sun Microsystems in 1995. Today it powers Android apps, banking systems, Netflix, Amazon, and Spring Boot backends.",
+      "The three core pieces are JDK (Java Development Kit), JRE (Java Runtime Environment), and JVM (Java Virtual Machine)."
+    ],
+    "code": "public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Java is everywhere!\");\n    }\n}"
+  },
+  {
+    "id": "hello-world",
+    "title": "Hello, World!",
+    "tagline": "Your very first Java program, dissected",
+    "content": [
+      "Every Java program lives inside a class.",
+      "The main method is the JVM entry point: public static void main(String[] args)."
+    ],
+    "code": "public class HelloWorld {\n    public static void main(String[] args) {\n        System.out.println(\"Hello, World!\");\n    }\n}"
+  },
+  {
+    "id": "data-types",
+    "title": "Variables and Data Types",
+    "tagline": "Java's typed boxes for storing data",
+    "content": [
+      "Java has 8 primitive types: byte, short, int, long, float, double, char, and boolean.",
+      "Reference types live on the heap: String, arrays, and the objects you create."
+    ],
+    "code": "public class DataTypes {\n    public static void main(String[] args) {\n        int age = 25;\n        double pi = 3.14159;\n        String name = \"Student\";\n        System.out.println(name + \", age: \" + age);\n    }\n}"
+  },
+  {
+    "id": "operators",
+    "title": "Operators",
+    "tagline": "Arithmetic and logical operators",
+    "content": [
+      "Java supports arithmetic, comparison, assignment, and logical operators.",
+      "Be careful with integer division: 7 / 2 equals 3. Use 7.0 / 2 for decimal division."
+    ],
+    "code": "public class Operators {\n    public static void main(String[] args) {\n        System.out.println(7 / 2);\n        System.out.println(7.0 / 2);\n    }\n}"
+  },
+  {
+    "id": "strings",
+    "title": "Strings",
+    "tagline": "Immutable text and StringBuilder",
+    "content": [
+      "Strings in Java are immutable, which means methods like toUpperCase() return a new String.",
+      "Use StringBuilder when you need efficient concatenation inside loops."
+    ],
+    "code": "public class Strings {\n    public static void main(String[] args) {\n        String s = \"hello\";\n        System.out.println(s.toUpperCase());\n    }\n}"
+  },
+  {
+    "id": "control-flow",
+    "title": "If, Else, and Switch",
+    "tagline": "Decision making",
+    "content": [
+      "if/else chains and switch statements control program flow.",
+      "Modern switch expressions reduce fall-through bugs and make code easier to read."
+    ],
+    "code": "public class ControlFlow {\n    public static void main(String[] args) {\n        int score = 85;\n        if (score >= 90) {\n            System.out.println(\"A\");\n        } else if (score >= 75) {\n            System.out.println(\"B\");\n        } else {\n            System.out.println(\"Keep going\");\n        }\n    }\n}"
+  },
+  {
+    "id": "loops",
+    "title": "Loops",
+    "tagline": "for, while, do-while, and for-each",
+    "content": [
+      "Loops let you repeat work safely and clearly.",
+      "Use for-each when you do not need the index, and watch for infinite loops."
+    ],
+    "code": "public class Loops {\n    public static void main(String[] args) {\n        for (int i = 1; i <= 5; i++) {\n            System.out.println(i);\n        }\n    }\n}"
+  },
+  {
+    "id": "arrays",
+    "title": "Arrays and Methods",
+    "tagline": "Storing sequences and organizing behavior",
+    "content": [
+      "Arrays are fixed-size sequences.",
+      "Methods help you structure behavior, reuse logic, and visualize the call stack."
+    ],
+    "code": "public class ArraysMethods {\n    public static void main(String[] args) {\n        int[] numbers = {10, 20, 30};\n        System.out.println(numbers[1]);\n    }\n}"
+  },
+  {
+    "id": "oop-classes-objects",
+    "title": "Classes and Objects",
+    "tagline": "Blueprints and instances",
+    "content": [
+      "A class defines fields and methods. Objects are instances of a class.",
+      "Use private fields and public methods to encapsulate state."
+    ],
+    "code": "public class BankAccount {\n    private String owner;\n    private double balance;\n\n    public BankAccount(String owner, double initial) {\n        this.owner = owner;\n        this.balance = initial;\n    }\n\n    public void deposit(double amount) {\n        if (amount <= 0) throw new IllegalArgumentException(\"Must be positive\");\n        balance += amount;\n    }\n\n    public double getBalance() {\n        return balance;\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        BankAccount alice = new BankAccount(\"Alice\", 1000.0);\n        alice.deposit(250);\n        System.out.println(alice.getBalance());\n    }\n}"
+  },
+  {
+    "id": "oop-inheritance",
+    "title": "Inheritance and Polymorphism",
+    "tagline": "Reuse and specialize behavior",
+    "content": [
+      "Inheritance lets a subclass extend a superclass.",
+      "Polymorphism lets you treat different subclasses through a shared parent type."
+    ],
+    "code": "public class Vehicle {\n    public void drive() {\n        System.out.println(\"Driving\");\n    }\n}\n\npublic class Car extends Vehicle {\n    @Override\n    public void drive() {\n        System.out.println(\"Car driving\");\n    }\n}\n\npublic class Main {\n    public static void main(String[] args) {\n        Vehicle vehicle = new Car();\n        vehicle.drive();\n    }\n}"
+  },
+  {
+    "id": "oop-interfaces",
+    "title": "Interfaces and Abstract Classes",
+    "tagline": "Design contracts, not just inheritance trees",
+    "content": [
+      "Interfaces define a contract that classes can implement.",
+      "Abstract classes let you share code while still forcing subclasses to provide missing details."
+    ],
+    "code": "interface PaymentMethod {\n    void pay(double amount);\n}\n\nabstract class Account {\n    abstract void close();\n}\n\nclass CardPayment implements PaymentMethod {\n    public void pay(double amount) {\n        System.out.println(\"Paid \" + amount);\n    }\n}"
+  },
+  {
+    "id": "collections",
+    "title": "Collections Intro",
+    "tagline": "List, Set, and Map basics",
+    "content": [
+      "Learn ArrayList, LinkedList, HashMap, and HashSet, and understand when to use each one.",
+      "The Collections framework gives you a shared set of interfaces and implementations."
+    ],
+    "code": "import java.util.ArrayList;\nimport java.util.List;\n\npublic class CollectionsIntro {\n    public static void main(String[] args) {\n        List<String> names = new ArrayList<>();\n        names.add(\"Java\");\n        System.out.println(names.get(0));\n    }\n}"
+  },
+  {
+    "id": "generics",
+    "title": "Generics",
+    "tagline": "Type-safe reusable code",
+    "content": [
+      "Generics let you write classes and methods that work with a type parameter.",
+      "They prevent unsafe casts and help the compiler catch mistakes earlier."
+    ],
+    "code": "import java.util.List;\n\npublic class GenericsDemo {\n    public static <T> void printAll(List<T> items) {\n        for (T item : items) {\n            System.out.println(item);\n        }\n    }\n}"
+  },
+  {
+    "id": "exceptions",
+    "title": "Exceptions",
+    "tagline": "Handling errors gracefully",
+    "content": [
+      "Use try, catch, and finally to handle exceptions.",
+      "Throw custom exceptions when a domain rule is broken."
+    ],
+    "code": "public class ExceptionsDemo {\n    public static void main(String[] args) {\n        try {\n            int value = 1 / 0;\n            System.out.println(value);\n        } catch (ArithmeticException ex) {\n            System.out.println(\"Error: \" + ex.getMessage());\n        }\n    }\n}"
+  },
+  {
+    "id": "file-io",
+    "title": "File I/O",
+    "tagline": "Read and write files safely",
+    "content": [
+      "Use Files, Path, BufferedReader, and BufferedWriter for modern file handling.",
+      "Prefer try-with-resources so streams close automatically."
+    ],
+    "code": "import java.nio.file.Files;\nimport java.nio.file.Path;\n\npublic class FileIO {\n    public static void main(String[] args) throws Exception {\n        Path path = Path.of(\"note.txt\");\n        Files.writeString(path, \"hello\");\n        System.out.println(Files.readString(path));\n    }\n}"
+  },
+  {
+    "id": "streams-lambdas",
+    "title": "Streams and Lambdas",
+    "tagline": "Functional-style processing of collections",
+    "content": [
+      "Streams let you map, filter, and reduce collections in a declarative style.",
+      "Lambdas let you pass behavior into methods in a compact form."
+    ],
+    "code": "import java.util.List;\n\npublic class StreamsDemo {\n    public static void main(String[] args) {\n        List<Integer> nums = List.of(1, 2, 3, 4, 5);\n        int sum = nums.stream()\n            .filter(n -> n % 2 == 1)\n            .mapToInt(Integer::intValue)\n            .sum();\n        System.out.println(sum);\n    }\n}"
+  },
+  {
+    "id": "concurrency-threads",
+    "title": "Concurrency and Threads",
+    "tagline": "Running work in parallel safely",
+    "content": [
+      "Use Thread, Runnable, and the java.util.concurrent package for concurrency.",
+      "Prefer Executors, avoid shared mutable state, and coordinate access carefully."
+    ],
+    "code": "import java.util.concurrent.ExecutorService;\nimport java.util.concurrent.Executors;\nimport java.util.concurrent.TimeUnit;\n\npublic class ConcurrencyDemo {\n    public static void main(String[] args) throws Exception {\n        ExecutorService pool = Executors.newFixedThreadPool(2);\n        pool.submit(() -> System.out.println(\"Hello from thread\"));\n        pool.shutdown();\n        pool.awaitTermination(1, TimeUnit.SECONDS);\n    }\n}"
+  },
+  {
+    "id": "jvm-internals",
+    "title": "JVM Internals",
+    "tagline": "Source code to bytecode to machine code",
+    "content": [
+      "The compiler turns .java files into bytecode, which the JVM loads, verifies, and executes.",
+      "The JVM can interpret bytecode at first, then use JIT compilation to speed up hot paths."
+    ],
+    "code": "public class JvmFlow {\n    public static void main(String[] args) {\n        System.out.println(\"javac -> bytecode -> JVM -> JIT\");\n    }\n}"
+  },
+  {
+    "id": "build-tools",
+    "title": "Build Tools: Maven and Gradle",
+    "tagline": "Building and managing Java projects",
+    "content": [
+      "Maven and Gradle automate compilation, testing, and dependency management.",
+      "Learn the project structure, the lifecycle, and the commands you will use every day."
+    ],
+    "code": "<!-- Example command -->\n<!-- mvn test -->"
+  }
 ]

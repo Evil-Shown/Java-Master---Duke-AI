@@ -3,9 +3,10 @@ import path from 'path'
 import {spawn} from 'child_process'
 import fs from 'fs'
 import os from 'os'
-import fetch from 'node-fetch'
 import lessons from '../data/lessons.json'
 import quizzes from '../data/quizzes.json'
+import challenges from '../data/challenges.json'
+import games from '../data/games.json'
 const progressFile = path.join(__dirname, '../data/progress.json')
 import * as db from './db'
 import authRouter from './auth'
@@ -18,7 +19,7 @@ const DOCKER_TIMEOUT_MS = parseInt(process.env.DOCKER_TIMEOUT_MS || '8000', 10)
 const MAX_CODE_BYTES = parseInt(process.env.MAX_CODE_BYTES || String(64 * 1024), 10)
 
 // Simple in-memory execution queue to serialize Docker runs and enforce limits
-type QueueTask = { tmp:string, id:string, resolve:(v:any)=>void, reject:(e:any)=>void }
+type QueueTask = { tmp:string, id:string, input:string, resolve:(v:any)=>void, reject:(e:any)=>void }
 const taskQueue: QueueTask[] = []
 let runningTask = false
 
@@ -44,7 +45,7 @@ function runNextInQueue(){
   const hostPath = convertPathForDocker(t.tmp)
   const args = [
     'run','--rm', `--cpus=${DOCKER_CPUS}`, `--memory=${DOCKER_MEMORY}`, '--pids-limit=64', '--network=none',
-    '-v', `${hostPath}:/work`, '-w', '/work', 'openjdk:17', 'sh', '-c', 'javac Main.java && java Main'
+    '-v', `${hostPath}:/work`, '-w', '/work', 'openjdk:17', 'sh', '-c', 'javac Main.java && java Main < input.txt'
   ]
   const proc = spawn(dockerCmd, args)
   let out = ''
@@ -72,11 +73,109 @@ function runNextInQueue(){
 function readProgress(){ try{ return JSON.parse(fs.readFileSync(progressFile,'utf8')||'{}') }catch(e){ return {} } }
 function writeProgress(obj:any){ fs.writeFileSync(progressFile, JSON.stringify(obj,null,2)) }
 
+function recordActivity(userId:string, xp:number){
+  if (process.env.DATABASE_URL || process.env.PG_CONNECTION) return
+  const progress = readProgress()
+  progress[userId] = progress[userId] || {}
+  const meta = progress[userId]._meta || {xp: 0, streak: 0, lastActivity: ''}
+  const today = new Date().toISOString().slice(0, 10)
+  if (meta.lastActivity !== today) {
+    const previous = new Date()
+    previous.setDate(previous.getDate() - 1)
+    const yesterday = previous.toISOString().slice(0, 10)
+    meta.streak = meta.lastActivity === yesterday ? meta.streak + 1 : 1
+    meta.lastActivity = today
+  }
+  meta.xp += xp
+  progress[userId]._meta = meta
+  writeProgress(progress)
+}
+
+function getProfile(userId:string){
+  const progress = readProgress()[userId] || {}
+  const meta = progress._meta || {xp: 0, streak: 0, lastActivity: ''}
+  const xp = Number(meta.xp || 0)
+  return {xp, level: Math.floor(xp / 100) + 1, streak: Number(meta.streak || 0), lastActivity: meta.lastActivity || ''}
+}
+
+function enqueueSandbox(code:string, input=''){
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(),'java-docker-'))
+  fs.writeFileSync(path.join(tmp,'Main.java'), code)
+  fs.writeFileSync(path.join(tmp,'input.txt'), input)
+  const taskId = String(Date.now()) + '-' + Math.random().toString(36).slice(2,8)
+  return new Promise<string>((resolve, reject)=>{
+    taskQueue.push({ tmp, id: taskId, input, resolve, reject })
+    setImmediate(runNextInQueue)
+  })
+}
+
+function runLocal(code:string, input=''){
+  return new Promise<string>((resolve, reject)=>{
+    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'java-local-'))
+    const file = path.join(tmp, 'Main.java')
+    fs.writeFileSync(file, code)
+    const compile = spawn('javac', [file], {cwd: tmp})
+    let compileErr = ''
+    compile.stderr.on('data', c => compileErr += c.toString())
+    compile.on('error', error => { try{ fs.rmSync(tmp, {recursive:true, force:true}) }catch{}; reject(error) })
+    compile.on('close', codeExit => {
+      if (codeExit !== 0) {
+        try{ fs.rmSync(tmp, {recursive:true, force:true}) }catch{}
+        resolve('Compilation error:\n' + compileErr)
+        return
+      }
+      const runner = spawn('java', ['-cp', tmp, 'Main'], {cwd: tmp})
+      let out = ''
+      let err = ''
+      runner.stdin.write(input)
+      runner.stdin.end()
+      runner.stdout.on('data', d => out += d.toString())
+      runner.stderr.on('data', d => err += d.toString())
+      const timeout = setTimeout(() => { try{ runner.kill('SIGKILL') }catch{} }, 5000)
+      runner.on('error', error => { clearTimeout(timeout); try{ fs.rmSync(tmp, {recursive:true, force:true}) }catch{}; reject(error) })
+      runner.on('close', () => {
+        clearTimeout(timeout)
+        try{ fs.rmSync(tmp, {recursive:true, force:true}) }catch{}
+        resolve((out || '') + (err ? '\nERR:\n' + err : '') || 'Program finished with no output')
+      })
+    })
+  })
+}
+
+async function executeJava(code:string, input=''){
+  if (DOCKER_ENABLED) {
+    try { return await enqueueSandbox(code, input) }
+    catch { return runLocal(code, input) }
+  }
+  return runLocal(code, input)
+}
+
 const app = express()
 const port = process.env.PORT || 4000
 
 app.use(express.json())
 app.use('/api/auth', authRouter)
+
+app.get('/api/health', async (_req, res) => {
+  let dockerAvailable = false
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const check = spawn('docker', ['info'], { stdio: 'ignore' })
+      check.once('error', reject)
+      check.once('close', code => code === 0 ? resolve() : reject(new Error('docker unavailable')))
+    })
+    dockerAvailable = true
+  } catch {
+    dockerAvailable = false
+  }
+
+  res.json({
+    ok: true,
+    dockerEnabled: DOCKER_ENABLED,
+    dockerAvailable,
+    persistence: process.env.DATABASE_URL || process.env.PG_CONNECTION ? 'postgres' : 'json'
+  })
+})
 
 // Initialize DB tables if Postgres configured
 ;(async ()=>{
@@ -114,10 +213,12 @@ app.post('/api/chat', (req,res)=>{
 
 // AI-backed Duke endpoint: uses OpenAI if OPENAI_API_KEY is set, otherwise falls back to rule-based.
 app.post('/api/ai-chat', async (req,res)=>{
-  const {message, lessonId} = req.body || {}
-  const lesson = lessons.find((l:any)=> l.id === lessonId)
-  const system = `You are Duke, a senior Java engineer tutor. Keep explanations friendly, use analogies, and adapt to the user's current lesson.`
-  const context = lesson ? `Current lesson title: ${lesson.title}\n${lesson.content.join('\n')}` : ''
+  const {message, lessonId, history = '', code = ''} = req.body || {}
+  const lesson:any = lessons.find((l:any)=> l.id === lessonId)
+  const system = `You are Duke, a senior Java engineer tutor. Keep explanations friendly, use analogies, ask one guiding question when useful, and never give a complete challenge solution before the learner attempts it.`
+  const context = lesson ? `Current lesson title: ${lesson.title}\n${lesson.content.join('\n')}\n${lesson.analogy || ''}` : ''
+  const codeContext = code ? `\nLearner code:\n${String(code).slice(0, MAX_CODE_BYTES)}` : ''
+  const recentHistory = Array.isArray(history) ? history.slice(-6).map((item:any) => `${item.from}: ${item.text}`).join('\n') : String(history || '')
   if (process.env.OPENAI_API_KEY){
     try{
       const body = {
@@ -125,6 +226,7 @@ app.post('/api/ai-chat', async (req,res)=>{
         messages: [
           {role:'system', content: system},
           {role:'system', content: context},
+          {role:'system', content: recentHistory + codeContext},
           {role:'user', content: message}
         ],
         max_tokens: 500
@@ -153,6 +255,102 @@ app.post('/api/ai-chat', async (req,res)=>{
 // Quizzes endpoints
 app.get('/api/quizzes', (req,res)=>{
   res.json(quizzes)
+})
+
+app.get('/api/games', (_req, res) => res.json(games))
+
+app.post('/api/games/submit', (req, res) => {
+  const {userId = 'anonymous', gameType, gameId, answer} = req.body || {}
+  const collection:any[] = gameType === 'bug' ? games.bugs : games.output
+  const game = collection.find(item => item.id === gameId)
+  if (!game) return res.status(404).json({error:'game not found'})
+  const correct = String(answer) === String(game.answer)
+  if (correct) recordActivity(String(userId), 10)
+  res.json({correct, explanation: game.explanation || (correct ? 'Correct. Nice observation.' : 'Not quite. Try tracing the code line by line.')})
+})
+
+// Challenge endpoints. Public tests are returned for the editor; hidden tests
+// are only evaluated by the server and never exposed to the browser.
+app.get('/api/challenges', (_req, res) => {
+  res.json(challenges.map((challenge:any) => ({
+    id: challenge.id,
+    title: challenge.title,
+    difficulty: challenge.difficulty,
+    lessonId: challenge.lessonId,
+    statement: challenge.statement
+  })))
+})
+
+app.get('/api/challenges/:id', (req, res) => {
+  const challenge = challenges.find((item:any) => item.id === req.params.id)
+  if (!challenge) return res.status(404).json({error:'challenge not found'})
+  res.json({
+    id: challenge.id,
+    title: challenge.title,
+    difficulty: challenge.difficulty,
+    lessonId: challenge.lessonId,
+    statement: challenge.statement,
+    starterCode: challenge.starterCode,
+    tests: challenge.tests.filter((test:any) => test.isPublic),
+    hints: challenge.hints
+  })
+})
+
+async function evaluateChallenge(challenge:any, code:string, includeHidden:boolean){
+  const tests = includeHidden ? challenge.tests : challenge.tests.filter((test:any) => test.isPublic)
+  const results = []
+  for (const test of tests) {
+    const output = await executeJava(code, test.input)
+    const actual = output.trim()
+    const expected = String(test.expectedOutput).trim()
+    results.push({passed: actual === expected, input: test.input, expected, actual})
+  }
+  return results
+}
+
+async function persistChallengeResult(userId:string, challengeId:string, passed:boolean){
+  const score = passed ? 100 : 0
+  if (process.env.DATABASE_URL || process.env.PG_CONNECTION) {
+    await db.upsertProgress(userId, `challenge:${challengeId}`, passed, score)
+    if (passed) {
+      try { await db.pool!.query('INSERT INTO achievements (user_id,key,title) VALUES ($1,$2,$3)', [userId, `challenge:${challengeId}`, `Solved ${challengeId}`]) } catch {}
+    }
+    return
+  }
+  const progress = readProgress()
+  progress[userId] = progress[userId] || {}
+  progress[userId][`challenge:${challengeId}`] = {completed: passed, score, updated: new Date().toISOString()}
+  progress[userId].achievements = progress[userId].achievements || []
+  if (passed && !progress[userId].achievements.some((item:any) => item.key === `challenge:${challengeId}`)) {
+    progress[userId].achievements.push({key:`challenge:${challengeId}`, title:`Solved ${challengeId}`, awarded_at:new Date().toISOString()})
+  }
+  writeProgress(progress)
+  if (passed) recordActivity(userId, 50)
+}
+
+app.post('/api/challenges/:id/run', async (req, res) => {
+  const challenge = challenges.find((item:any) => item.id === req.params.id)
+  const code = String(req.body?.code || '')
+  if (!challenge) return res.status(404).json({error:'challenge not found'})
+  if (!code) return res.status(400).json({error:'no code'})
+  if (Buffer.byteLength(code, 'utf8') > MAX_CODE_BYTES) return res.status(400).json({error:'code-too-large'})
+  try { res.json({results: await evaluateChallenge(challenge, code, false)}) }
+  catch (error) { res.status(500).json({error:'challenge-run-failed', detail:String(error)}) }
+})
+
+app.post('/api/challenges/:id/submit', async (req, res) => {
+  const challenge = challenges.find((item:any) => item.id === req.params.id)
+  const code = String(req.body?.code || '')
+  const userId = String(req.body?.userId || 'anonymous')
+  if (!challenge) return res.status(404).json({error:'challenge not found'})
+  if (!code) return res.status(400).json({error:'no code'})
+  if (Buffer.byteLength(code, 'utf8') > MAX_CODE_BYTES) return res.status(400).json({error:'code-too-large'})
+  try {
+    const results = await evaluateChallenge(challenge, code, true)
+    const passed = results.every((result:any) => result.passed)
+    await persistChallengeResult(userId, challenge.id, passed)
+    res.json({passed, results})
+  } catch (error) { res.status(500).json({error:'challenge-submit-failed', detail:String(error)}) }
 })
 
 // Submit quiz answer, update progress and award achievement on correct answer
@@ -187,6 +385,8 @@ app.post('/api/quizzes/submit', async (req,res)=>{
       writeProgress(p)
     }
   }catch(e){ console.error('quiz submit error',e); return res.status(500).json({error:String(e)}) }
+
+  if (correct) recordActivity(String(userId), 25)
 
   res.json({ok:true, correct, score})
 })
@@ -254,8 +454,21 @@ app.get('/api/progress', (req,res)=>{
   if (process.env.DATABASE_URL || process.env.PG_CONNECTION){
     db.getProgress(userId).then(p=> res.json(p || {})).catch(e=> res.status(500).json({error:String(e)}))
   } else {
-    res.json(readProgress())
+    const progress = readProgress()
+    res.json(progress[userId] || {})
   }
+})
+
+app.get('/api/profile', (req,res)=>{
+  const userId = String(req.query.userId || 'anonymous')
+  if (process.env.DATABASE_URL || process.env.PG_CONNECTION) {
+    db.getProgress(userId).then(progress => {
+      const completed = Object.values(progress || {}).filter((item:any) => item.completed).length
+      res.json({xp: completed * 25, level: Math.floor(completed / 4) + 1, streak: 0, lastActivity: ''})
+    }).catch(e => res.status(500).json({error:String(e)}))
+    return
+  }
+  res.json(getProfile(userId))
 })
 
 app.post('/api/progress', (req,res)=>{
@@ -326,19 +539,8 @@ app.post('/api/run-sandbox', async (req, res)=>{
   if(!code) return res.status(400).json({error:'no code'})
   if (Buffer.byteLength(code, 'utf8') > MAX_CODE_BYTES) return res.status(400).json({error:'code-too-large'})
 
-  const tmp = fs.mkdtempSync(path.join(os.tmpdir(),'java-docker-'))
-  const file = path.join(tmp,'Main.java')
-  fs.writeFileSync(file, code)
-
-  // enqueue the task
-  const taskId = String(Date.now()) + '-' + Math.random().toString(36).slice(2,8)
-  const p = new Promise((resolve, reject)=>{
-    taskQueue.push({ tmp, id: taskId, resolve, reject })
-    setImmediate(runNextInQueue)
-  })
-
   try{
-    const output = await p
+    const output = await enqueueSandbox(code, String(req.body.input || ''))
     res.json({output})
   }catch(e){
     res.status(500).json({error:'docker-run-failed',detail:String(e)})

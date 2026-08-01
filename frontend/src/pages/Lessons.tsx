@@ -6,6 +6,7 @@ type Lesson = {
   tagline?: string
   content: string[]
   code?: string
+  module?: string
 }
 
 export default function Lessons({
@@ -16,6 +17,8 @@ export default function Lessons({
   onSelect?: (id: string) => void
 }) {
   const [lessons, setLessons] = useState<Lesson[]>([])
+  const [completed, setCompleted] = useState<Record<string, boolean>>({})
+  const userId = localStorage.getItem('username') || 'anonymous'
 
   useEffect(() => {
     fetch('/api/lessons')
@@ -34,6 +37,16 @@ export default function Lessons({
       onSelect?.(lessons[0].id)
     }
   }, [activeId, lessons, onSelect])
+
+  useEffect(() => {
+    fetch('/api/progress?userId=' + encodeURIComponent(userId))
+      .then(response => response.json())
+      .then(data => {
+        const values: Record<string, boolean> = {}
+        Object.entries(data || {}).forEach(([id, value]: [string, any]) => { values[id] = Boolean(value?.completed) })
+        setCompleted(values)
+      })
+  }, [userId])
 
   const activeLesson = useMemo(
     () => lessons.find(lesson => lesson.id === activeId) || lessons[0],
@@ -67,10 +80,10 @@ export default function Lessons({
               className={`lesson-item${lesson.id === activeId ? ' active' : ''}`}
               onClick={() => onSelect?.(lesson.id)}
             >
-              <div className="lesson-item-title">
-                {index + 1}. {lesson.title}
-              </div>
-              <div className="lesson-item-copy">{lesson.tagline}</div>
+               <div className="lesson-item-title">
+                 {index + 1}. {lesson.title}
+               </div>
+               <div className="lesson-item-copy">{completed[lesson.id] ? 'Completed · ' : ''}{lesson.module || lesson.tagline}</div>
             </button>
           ))}
         </section>
@@ -101,8 +114,14 @@ export default function Lessons({
                 </>
               )}
 
-              <div className="lesson-meta" style={{ marginTop: '1rem' }}>
-                <span className="pill">Ask Duke for an analogy</span>
+               <div className="lesson-meta" style={{ marginTop: '1rem' }}>
+                 <button className={completed[activeLesson.id] ? 'secondary-button' : 'primary-button'} onClick={async () => {
+                   await fetch('/api/progress', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({userId, lessonId: activeLesson.id, completed: true, score: 100}) })
+                   setCompleted(current => ({...current, [activeLesson.id]: true}))
+                 }}>
+                   {completed[activeLesson.id] ? 'Lesson completed' : 'Mark lesson complete'}
+                 </button>
+                 <span className="pill">Ask Duke for an analogy</span>
                 <span className="pill">Then solve the quiz</span>
                 <span className="pill">Then run the playground</span>
               </div>

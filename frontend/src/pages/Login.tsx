@@ -1,6 +1,8 @@
 import React, { useState } from 'react'
+import { useAuth } from '../context/AuthContext'
 
 export default function Login() {
+  const { setSession, isAuthenticated, username } = useAuth()
   const [user, setUser] = useState('')
   const [pass, setPass] = useState('')
   const [status, setStatus] = useState<string>('Use a local account to save progress and badges.')
@@ -22,13 +24,7 @@ export default function Login() {
         throw new Error(data.error || 'Auth failed')
       }
 
-      localStorage.setItem('token', data.token)
-      try {
-        const payload = JSON.parse(atob(data.token.split('.')[1]))
-        if (payload?.username) localStorage.setItem('username', payload.username)
-      } catch (error) {
-        // Ignore malformed token payloads in local development.
-      }
+      setSession(data.token)
 
       setStatus(endpoint === 'login' ? 'Logged in successfully.' : 'Account created successfully.')
     } catch (error) {
@@ -46,6 +42,7 @@ export default function Login() {
           <p className="section-copy">
             Keep your progress, achievements, and flashcards tied to a username.
           </p>
+          {isAuthenticated && <span className="pill">Signed in as {username}</span>}
         </div>
       </div>
 

@@ -1,0 +1,102 @@
+[
+  {
+    "id": "sum-array",
+    "title": "Sum an Array",
+    "difficulty": "easy",
+    "lessonId": "arrays",
+    "statement": "Read an integer n followed by n integers and print their sum.",
+    "starterCode": "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner input = new Scanner(System.in);\n        int n = input.nextInt();\n        int sum = 0;\n        for (int i = 0; i < n; i++) {\n            sum += input.nextInt();\n        }\n        System.out.println(sum);\n    }\n}",
+    "tests": [{"input": "5\n1 2 3 4 5\n", "expectedOutput": "15", "isPublic": true}, {"input": "3\n-2 10 7\n", "expectedOutput": "15", "isPublic": false}],
+    "hints": ["Read the count before reading the values.", "Keep a running total in an int."]
+  },
+  {
+    "id": "reverse-string",
+    "title": "Reverse a String",
+    "difficulty": "easy",
+    "lessonId": "strings",
+    "statement": "Read one line and print its characters in reverse order.",
+    "starterCode": "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner input = new Scanner(System.in);\n        String value = input.nextLine();\n        System.out.println(new StringBuilder(value).reverse());\n    }\n}",
+    "tests": [{"input": "java\n", "expectedOutput": "avaj", "isPublic": true}, {"input": "academy\n", "expectedOutput": "ymedaca", "isPublic": false}],
+    "hints": ["Strings are immutable.", "StringBuilder has a reverse operation."]
+  },
+  {
+    "id": "fizz-buzz",
+    "title": "Fizz Buzz",
+    "difficulty": "easy",
+    "lessonId": "control-flow",
+    "statement": "Read n and print numbers from 1 through n. Print Fizz for multiples of 3, Buzz for multiples of 5, and FizzBuzz for both.",
+    "starterCode": "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        int n = new Scanner(System.in).nextInt();\n        for (int i = 1; i <= n; i++) {\n            if (i % 15 == 0) System.out.println(\"FizzBuzz\");\n            else if (i % 3 == 0) System.out.println(\"Fizz\");\n            else if (i % 5 == 0) System.out.println(\"Buzz\");\n            else System.out.println(i);\n        }\n    }\n}",
+    "tests": [{"input": "5\n", "expectedOutput": "1\n2\nFizz\n4\nBuzz", "isPublic": true}, {"input": "15\n", "expectedOutput": "1\n2\nFizz\n4\nBuzz\nFizz\n7\n8\nFizz\nBuzz\n11\nFizz\n13\n14\nFizzBuzz", "isPublic": false}],
+    "hints": ["Check the combined case before individual multiples.", "Use the remainder operator."]
+  },
+  {
+    "id": "palindrome",
+    "title": "Palindrome Check",
+    "difficulty": "easy",
+    "lessonId": "strings",
+    "statement": "Read a word and print true if it reads the same forwards and backwards; otherwise print false.",
+    "starterCode": "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        String value = new Scanner(System.in).next();\n        System.out.println(value.equals(new StringBuilder(value).reverse().toString()));\n    }\n}",
+    "tests": [{"input": "level\n", "expectedOutput": "true", "isPublic": true}, {"input": "java\n", "expectedOutput": "false", "isPublic": false}],
+    "hints": ["Compare the original with its reversed form."]
+  },
+  {
+    "id": "word-frequency",
+    "title": "Word Frequency",
+    "difficulty": "medium",
+    "lessonId": "collections",
+    "statement": "Read n words and a target word. Print how many times the target appears.",
+    "starterCode": "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner input = new Scanner(System.in);\n        int n = input.nextInt();\n        Map<String, Integer> counts = new HashMap<>();\n        for (int i = 0; i < n; i++) {\n            String word = input.next();\n            counts.put(word, counts.getOrDefault(word, 0) + 1);\n        }\n        String target = input.next();\n        System.out.println(counts.getOrDefault(target, 0));\n    }\n}",
+    "tests": [{"input": "5\njava code java learn code\njava\n", "expectedOutput": "2", "isPublic": true}, {"input": "4\nred blue green blue\nyellow\n", "expectedOutput": "0", "isPublic": false}],
+    "hints": ["A map stores one count per word.", "getOrDefault avoids a missing-key branch."]
+  },
+  {
+    "id": "remove-duplicates",
+    "title": "Remove Duplicates",
+    "difficulty": "medium",
+    "lessonId": "collections",
+    "statement": "Read n integers and print the unique values in their first-seen order, separated by spaces.",
+    "starterCode": "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner input = new Scanner(System.in);\n        int n = input.nextInt();\n        Set<Integer> values = new LinkedHashSet<>();\n        for (int i = 0; i < n; i++) values.add(input.nextInt());\n        System.out.println(values.stream().map(String::valueOf).collect(java.util.stream.Collectors.joining(\" \")));\n    }\n}",
+    "tests": [{"input": "6\n3 1 3 2 1 4\n", "expectedOutput": "3 1 2 4", "isPublic": true}, {"input": "3\n9 9 9\n", "expectedOutput": "9", "isPublic": false}],
+    "hints": ["LinkedHashSet preserves insertion order."]
+  },
+  {
+    "id": "factorial",
+    "title": "Recursive Factorial",
+    "difficulty": "medium",
+    "lessonId": "loops",
+    "statement": "Read a non-negative integer n and print n factorial.",
+    "starterCode": "import java.util.*;\n\npublic class Main {\n    static long factorial(int n) {\n        return n <= 1 ? 1 : n * factorial(n - 1);\n    }\n\n    public static void main(String[] args) {\n        System.out.println(factorial(new Scanner(System.in).nextInt()));\n    }\n}",
+    "tests": [{"input": "5\n", "expectedOutput": "120", "isPublic": true}, {"input": "0\n", "expectedOutput": "1", "isPublic": false}],
+    "hints": ["The base cases are 0! = 1 and 1! = 1.", "Reduce n until it reaches the base case."]
+  },
+  {
+    "id": "anagram",
+    "title": "Anagram Check",
+    "difficulty": "medium",
+    "lessonId": "arrays",
+    "statement": "Read two lowercase words and print true if they contain exactly the same letters with the same frequencies.",
+    "starterCode": "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner input = new Scanner(System.in);\n        char[] a = input.next().toCharArray();\n        char[] b = input.next().toCharArray();\n        Arrays.sort(a);\n        Arrays.sort(b);\n        System.out.println(Arrays.equals(a, b));\n    }\n}",
+    "tests": [{"input": "listen silent\n", "expectedOutput": "true", "isPublic": true}, {"input": "java code\n", "expectedOutput": "false", "isPublic": false}],
+    "hints": ["Equal sorted character arrays represent anagrams."]
+  },
+  {
+    "id": "binary-search",
+    "title": "Binary Search",
+    "difficulty": "hard",
+    "lessonId": "arrays",
+    "statement": "Read a sorted array and a target. Print the zero-based index of the target, or -1 when it is absent.",
+    "starterCode": "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner input = new Scanner(System.in);\n        int n = input.nextInt();\n        int[] values = new int[n];\n        for (int i = 0; i < n; i++) values[i] = input.nextInt();\n        int target = input.nextInt();\n        System.out.println(Arrays.binarySearch(values, target));\n    }\n}",
+    "tests": [{"input": "5\n1 3 5 7 9\n7\n", "expectedOutput": "3", "isPublic": true}, {"input": "4\n2 4 6 8\n5\n", "expectedOutput": "-1", "isPublic": false}],
+    "hints": ["Keep left and right bounds.", "Discard half the search space each iteration."]
+  },
+  {
+    "id": "stream-even-sum",
+    "title": "Stream Even Sum",
+    "difficulty": "hard",
+    "lessonId": "streams-lambdas",
+    "statement": "Read n integers and print the sum of the even values using a stream pipeline.",
+    "starterCode": "import java.util.*;\n\npublic class Main {\n    public static void main(String[] args) {\n        Scanner input = new Scanner(System.in);\n        int n = input.nextInt();\n        int[] values = new int[n];\n        for (int i = 0; i < n; i++) values[i] = input.nextInt();\n        System.out.println(Arrays.stream(values).filter(value -> value % 2 == 0).sum());\n    }\n}",
+    "tests": [{"input": "5\n1 2 3 4 5\n", "expectedOutput": "6", "isPublic": true}, {"input": "4\n-2 7 10 3\n", "expectedOutput": "8", "isPublic": false}],
+    "hints": ["filter keeps matching elements.", "sum is a terminal operation for an IntStream."]
+  }
+]

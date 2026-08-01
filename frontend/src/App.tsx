@@ -7,11 +7,16 @@ import Achievements from './pages/Achievements'
 import Flashcards from './pages/Flashcards'
 import Login from './pages/Login'
 import Profile from './pages/Profile'
+import Challenges from './pages/Challenges'
+import Games from './pages/Games'
+import { AuthProvider } from './context/AuthContext'
 import Duke from './components/Duke'
 
 const navItems = [
   { to: '/', label: 'Lessons', hint: 'Zero to hero' },
   { to: '/playground', label: 'Playground', hint: 'Run Java safely' },
+  { to: '/challenges', label: 'Challenges', hint: 'Solve with tests' },
+  { to: '/games', label: 'Games', hint: 'Practice playfully' },
   { to: '/quizzes', label: 'Quizzes', hint: 'Check understanding' },
   { to: '/achievements', label: 'Achievements', hint: 'Track momentum' },
   { to: '/flashcards', label: 'Flashcards', hint: 'Review faster' },
@@ -112,6 +117,8 @@ function Shell() {
           <Routes>
             <Route path="/" element={<Lessons activeId={activeLessonId} onSelect={setActiveLessonId} />} />
             <Route path="/playground" element={<Playground />} />
+            <Route path="/challenges" element={<Challenges />} />
+            <Route path="/games" element={<Games />} />
             <Route path="/quizzes" element={<Quizzes lessonId={activeLessonId} />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/flashcards" element={<Flashcards />} />
@@ -128,8 +135,10 @@ function Shell() {
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <Shell />
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Shell />
+      </BrowserRouter>
+    </AuthProvider>
   )
 }

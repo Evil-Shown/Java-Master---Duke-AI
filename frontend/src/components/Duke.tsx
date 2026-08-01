@@ -40,7 +40,7 @@ export default function Duke({ lessonId }: { lessonId?: string }) {
       const res = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: trimmed, lessonId })
+        body: JSON.stringify({ message: trimmed, lessonId, history: msgs })
       })
       const data = await res.json()
       setMsgs(current => [...current, { from: 'duke', text: data.reply }])

@@ -1,0 +1,31 @@
+# Dependencies and build output
+node_modules/
+frontend/dist/
+backend/dist/
+dist/
+build/
+
+# Local environment and logs
+.env
+.env.*
+!.env.example
+*.log
+
+# Runtime data that should not be committed
+backend/data/users.json
+backend/data/progress.json
+
+# Graphify generated graphs, reports, caches, and local state
+graphify-out/
+.graphify/
+.graphify_*.json
+.graphify_python
+**/.cache/graphify/
+**/.cache/graphify-*
+graphify-cache/
+graphify-data/
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+.vscode/

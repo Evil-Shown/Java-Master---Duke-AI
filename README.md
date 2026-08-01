@@ -1,6 +1,7 @@
-# Java Academy (scaffold)
+# Java Academy
 
-This workspace is an initial scaffold for the Java Academy project you requested.
+An interactive Java learning platform with lessons, quizzes, a live Java playground, coding
+challenges, progress tracking, and Duke the tutor.
 
 Structure
 - frontend: React + Vite + TypeScript app (UI, playground, Duke integration)
@@ -8,7 +9,23 @@ Structure
 
 Quick start (local)
 
-1. Frontend
+1. Install dependencies from the project root:
+
+```bash
+npm install
+npm install --prefix frontend
+npm install --prefix backend
+```
+
+2. Start both applications:
+
+```bash
+npm run dev
+```
+
+Or start them separately:
+
+Frontend:
 
 ```bash
 cd java-academy/frontend
@@ -16,7 +33,7 @@ npm install
 npm run dev
 ```
 
-2. Backend
+Backend:
 
 ```bash
 cd java-academy/backend
@@ -24,11 +41,22 @@ npm install
 npm run dev
 ```
 
-Next steps
-- Complete frontend UI components and embed Monaco
-- Implement safe Java execution strategy for playground (containerized runner or remote judge)
-- Integrate AI tutor backend (Duke) using OpenAI or similar with context awareness
-- Add Postgres schema for users/progress
+The frontend runs on `http://localhost:5173` and proxies API requests to the backend on
+`http://localhost:4000`. Check `http://localhost:4000/api/health` for runtime status.
+
+Graphify
+--------
+
+This repository includes a project-scoped Graphify skill for OpenCode. Install the CLI separately
+with `uv tool install graphifyy`, then generate or update the local graph with:
+
+```powershell
+graphify .
+```
+
+Graphify updates automatically after commits through the local Git hook. Generated graph data and
+cache files are intentionally ignored by `.gitignore`; the project skill and OpenCode plugin are
+tracked.
 
 Docker runner (playground)
 - The backend includes a Docker-based sandbox runner at `POST /api/run-sandbox` which executes user Java code inside `openjdk:17`.

@@ -1,0 +1,13 @@
+{
+  "output": [
+    {"id":"output-integer-division","prompt":"What does this print?\n\nint result = 7 / 2;\nSystem.out.println(result);","options":["3","3.5","4","Compilation error"],"answer":0,"lessonId":"operators"},
+    {"id":"output-string-reference","prompt":"What does this print?\n\nString a = new String(\"java\");\nString b = new String(\"java\");\nSystem.out.println(a.equals(b));","options":["true","false","null","Compilation error"],"answer":0,"lessonId":"strings"},
+    {"id":"output-loop","prompt":"What does this print?\n\nfor (int i = 0; i < 3; i++) {\n    System.out.print(i);\n}","options":["012","123","0123","0 1 2"],"answer":0,"lessonId":"loops"},
+    {"id":"output-list","prompt":"What does this print?\n\nvar values = java.util.List.of(2, 4, 6);\nSystem.out.println(values.size());","options":["2","3","6","Compilation error"],"answer":1,"lessonId":"collections"}
+  ],
+  "bugs": [
+    {"id":"bug-equals","prompt":"Find the bug: this should print true for equal text.","code":"String expected = new String(\"ready\");\nString actual = new String(\"ready\");\nif (expected == actual) {\n    System.out.println(\"match\");\n}","answer":"3","explanation":"Use equals() for String content comparison. == compares object references.","lessonId":"strings"},
+    {"id":"bug-boundary","prompt":"Find the bug: this should print every array value.","code":"int[] values = {10, 20, 30};\nfor (int i = 0; i <= values.length; i++) {\n    System.out.println(values[i]);\n}","answer":"2","explanation":"The last valid index is length - 1, so use i < values.length.","lessonId":"arrays"},
+    {"id":"bug-switch","prompt":"Find the bug: this should print one label for each score.","code":"int score = 90;\nswitch (score) {\n    case 90: System.out.println(\"excellent\");\n    case 80: System.out.println(\"good\");\n    default: System.out.println(\"keep going\");\n}","answer":"3","explanation":"Classic switch cases need break statements, or use a modern switch expression.","lessonId":"control-flow"}
+  ]
+}

@@ -1,5 +1,0 @@
-[
-  {"lessonId":"getting-started-what-is-java","q":"What does WORA mean?","opts":["Write Once, Run Anywhere","Work On Reliable Apps","Write Often, Refactor Always"],"ans":0},
-  {"lessonId":"hello-world","q":"Which method signature is the Java entry point?","opts":["public void main()","public static void main(String[] args)","static void start()"],"ans":1},
-  {"lessonId":"oop-classes-objects","q":"Which keyword refers to the current object?","opts":["self","this","me"],"ans":1}
-]

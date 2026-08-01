@@ -26,6 +26,9 @@ export default function Achievements() {
         <div className="achievement-grid">
           {achievements.map(achievement => (
             <article key={achievement.id || achievement.key} className="achievement-card">
+              <div className="badge-letter">
+                {(achievement.title || achievement.key || '?').charAt(0).toUpperCase()}
+              </div>
               <div className="card-meta">
                 <span className="pill">Badge</span>
                 <span className="pill">{achievement.key || 'milestone'}</span>

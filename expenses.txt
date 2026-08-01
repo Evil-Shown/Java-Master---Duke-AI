@@ -1,0 +1,3 @@
+2026-08-02;food;12.5;lunch
+2026-08-01;transport;4.0;bus
+2026-07-31;food;8.75;coffee

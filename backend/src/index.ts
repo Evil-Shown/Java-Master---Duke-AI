@@ -19,7 +19,7 @@ const DOCKER_TIMEOUT_MS = parseInt(process.env.DOCKER_TIMEOUT_MS || '8000', 10)
 const MAX_CODE_BYTES = parseInt(process.env.MAX_CODE_BYTES || String(64 * 1024), 10)
 
 // Simple in-memory execution queue to serialize Docker runs and enforce limits
-type QueueTask = { tmp:string, id:string, input:string, resolve:(v:any)=>void, reject:(e:any)=>void }
+type QueueTask = { tmp:string, id:string, input:string, className:string, resolve:(v:any)=>void, reject:(e:any)=>void }
 const taskQueue: QueueTask[] = []
 let runningTask = false
 
@@ -45,7 +45,7 @@ function runNextInQueue(){
   const hostPath = convertPathForDocker(t.tmp)
   const args = [
     'run','--rm', `--cpus=${DOCKER_CPUS}`, `--memory=${DOCKER_MEMORY}`, '--pids-limit=64', '--network=none',
-    '-v', `${hostPath}:/work`, '-w', '/work', 'openjdk:17', 'sh', '-c', 'javac Main.java && java Main < input.txt'
+    '-v', `${hostPath}:/work`, '-w', '/work', 'openjdk:17', 'sh', '-c', `javac ${t.className}.java && java ${t.className} < input.txt`
   ]
   const proc = spawn(dockerCmd, args)
   let out = ''
@@ -98,13 +98,19 @@ function getProfile(userId:string){
   return {xp, level: Math.floor(xp / 100) + 1, streak: Number(meta.streak || 0), lastActivity: meta.lastActivity || ''}
 }
 
+function mainClassOf(code:string): string {
+  const m = code.match(/\bpublic\s+class\s+(\w+)/)
+  return m ? m[1] : 'Main'
+}
+
 function enqueueSandbox(code:string, input=''){
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(),'java-docker-'))
-  fs.writeFileSync(path.join(tmp,'Main.java'), code)
+  const className = mainClassOf(code)
+  fs.writeFileSync(path.join(tmp, className + '.java'), code)
   fs.writeFileSync(path.join(tmp,'input.txt'), input)
   const taskId = String(Date.now()) + '-' + Math.random().toString(36).slice(2,8)
   return new Promise<string>((resolve, reject)=>{
-    taskQueue.push({ tmp, id: taskId, input, resolve, reject })
+    taskQueue.push({ tmp, id: taskId, input, className, resolve, reject })
     setImmediate(runNextInQueue)
   })
 }
@@ -112,7 +118,8 @@ function enqueueSandbox(code:string, input=''){
 function runLocal(code:string, input=''){
   return new Promise<string>((resolve, reject)=>{
     const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'java-local-'))
-    const file = path.join(tmp, 'Main.java')
+    const className = mainClassOf(code)
+    const file = path.join(tmp, className + '.java')
     fs.writeFileSync(file, code)
     const compile = spawn('javac', [file], {cwd: tmp})
     let compileErr = ''
@@ -124,7 +131,7 @@ function runLocal(code:string, input=''){
         resolve('Compilation error:\n' + compileErr)
         return
       }
-      const runner = spawn('java', ['-cp', tmp, 'Main'], {cwd: tmp})
+      const runner = spawn('java', ['-cp', tmp, className], {cwd: tmp})
       let out = ''
       let err = ''
       runner.stdin.write(input)
@@ -143,11 +150,15 @@ function runLocal(code:string, input=''){
 }
 
 async function executeJava(code:string, input=''){
-  if (DOCKER_ENABLED) {
-    try { return await enqueueSandbox(code, input) }
-    catch { return runLocal(code, input) }
+  // Local JVM first (instant, no image required); sandbox is the fallback.
+  try { return await runLocal(code, input) }
+  catch (e) {
+    if (DOCKER_ENABLED) {
+      try { return await enqueueSandbox(code, input) }
+      catch { throw e }
+    }
+    throw e
   }
-  return runLocal(code, input)
 }
 
 const app = express()
@@ -493,7 +504,8 @@ app.post('/api/run', async (req, res) => {
 
   // Create temp directory
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'java-run-'))
-  const file = path.join(tmp, 'Main.java')
+  const className = mainClassOf(code)
+  const file = path.join(tmp, className + '.java')
   fs.writeFileSync(file, code)
 
   // Helper to cleanup
@@ -507,6 +519,10 @@ app.post('/api/run', async (req, res) => {
   const compile = spawn(javac, [file], {cwd: tmp})
   let compileErr = ''
   compile.stderr.on('data', (c)=> compileErr += c.toString())
+  compile.on('error', (error)=>{
+    cleanup()
+    return res.json({output: 'Compiler not available: ' + error.message})
+  })
   compile.on('close', (codeExit)=>{
     if (codeExit !== 0) {
       cleanup()
@@ -514,7 +530,7 @@ app.post('/api/run', async (req, res) => {
     }
 
     // Run the class with timeout
-    const runner = spawn(java, ['-cp', tmp, 'Main'], {cwd: tmp})
+    const runner = spawn(java, ['-cp', tmp, className], {cwd: tmp})
     let out = ''
     let err = ''
     runner.stdout.on('data', d=> out += d.toString())
@@ -522,6 +538,12 @@ app.post('/api/run', async (req, res) => {
 
     // Kill if runs longer than 5s
     const timeout = setTimeout(()=>{ try{ runner.kill('SIGKILL') }catch(e){} }, 5000)
+
+    runner.on('error', (error)=>{
+      clearTimeout(timeout)
+      cleanup()
+      res.json({output: 'Runner not available: ' + error.message})
+    })
 
     runner.on('close', ()=>{
       clearTimeout(timeout)

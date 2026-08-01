@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import fallbackQuizzes from '../data/quizzes.json'
 
 type Quiz = {
   lessonId: string
@@ -20,18 +21,30 @@ export default function Quizzes({ lessonId }: { lessonId?: string }) {
   const [quizzes, setQuizzes] = useState<Quiz[]>([])
   const [progress, setProgress] = useState<Record<string, any>>({})
   const [attempts, setAttempts] = useState<Record<string, AttemptState>>({})
+  const [offline, setOffline] = useState(false)
   const userId = localStorage.getItem('username') || 'anonymous'
 
   useEffect(() => {
     fetch('/api/quizzes')
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) throw new Error('HTTP ' + response.status)
+        return response.json()
+      })
       .then(setQuizzes)
+      .catch(() => {
+        setQuizzes(fallbackQuizzes as Quiz[])
+        setOffline(true)
+      })
   }, [])
 
   async function refreshProgress() {
-    const response = await fetch('/api/progress?userId=' + encodeURIComponent(userId))
-    const data = await response.json()
-    setProgress(data)
+    try {
+      const response = await fetch('/api/progress?userId=' + encodeURIComponent(userId))
+      const data = await response.json()
+      setProgress(data)
+    } catch {
+      // backend offline — keep current state
+    }
   }
 
   useEffect(() => {
@@ -82,6 +95,7 @@ export default function Quizzes({ lessonId }: { lessonId?: string }) {
         <div className="stacked-meta">
           <span className="pill">{relevant.length} questions visible</span>
           <span className="pill">{completedCount} lessons marked complete</span>
+          {offline && <span className="pill pill-offline">Backend offline — showing built-in quizzes</span>}
         </div>
       </div>
 

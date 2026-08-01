@@ -1,1 +1,26 @@
-{}
+{
+  "anonymous": {
+    "getting-started-what-is-java": {
+      "completed": true,
+      "score": 100,
+      "updated": "2026-08-01T20:12:21.468Z"
+    },
+    "jvm-internals": {
+      "completed": true,
+      "score": 100,
+      "updated": "2026-08-01T20:15:52.880Z"
+    },
+    "achievements": [
+      {
+        "key": "quiz:jvm-internals",
+        "title": "Completed quiz for jvm-internals",
+        "awarded_at": "2026-08-01T20:15:52.880Z"
+      }
+    ],
+    "_meta": {
+      "xp": 25,
+      "streak": 1,
+      "lastActivity": "2026-08-01"
+    }
+  }
+}

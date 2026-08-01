@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import Editor from '@monaco-editor/react'
+import { useTheme } from '../hooks/useTheme'
 
 type ChallengeSummary = {
   id: string
@@ -31,6 +32,7 @@ export default function Challenges() {
   const [busy, setBusy] = useState(false)
   const [showHints, setShowHints] = useState(false)
   const [status, setStatus] = useState('Choose a challenge to start practicing.')
+  const theme = useTheme()
 
   useEffect(() => {
     fetch('/api/challenges')
@@ -117,7 +119,7 @@ export default function Challenges() {
           {challenge ? (
             <>
               <div className="lesson-meta">
-                <span className="pill">{challenge.difficulty}</span>
+                <span className={`pill diff-${challenge.difficulty}`}>{challenge.difficulty}</span>
                 <span className="pill">{challenge.lessonId}</span>
               </div>
               <h2>{challenge.title}</h2>
@@ -128,8 +130,8 @@ export default function Challenges() {
                 </button>
                 {showHints && challenge.hints.map(hint => <span className="pill" key={hint}>{hint}</span>)}
               </div>
-              <div style={{ height: 430, borderRadius: '18px', overflow: 'hidden', border: '1px solid var(--line)', marginTop: '1rem' }}>
-                <Editor height="100%" defaultLanguage="java" value={code} onChange={value => setCode(value || '')} theme="vs-dark" options={{ fontSize: 14, minimap: { enabled: false }, automaticLayout: true, scrollBeyondLastLine: false }} />
+              <div className="editor-shell" style={{ height: 560, marginTop: '1rem' }}>
+                <Editor height="100%" defaultLanguage="java" value={code} onChange={value => setCode(value || '')} theme={theme === 'dark' ? 'vs-dark' : 'light'} options={{ fontSize: 15, minimap: { enabled: false }, automaticLayout: true, scrollBeyondLastLine: false, padding: { top: 14, bottom: 14 } }} />
               </div>
               <div className="form-actions" style={{ marginTop: '1rem' }}>
                 <button className="secondary-button" onClick={() => execute('run')} disabled={busy}>Run public tests</button>

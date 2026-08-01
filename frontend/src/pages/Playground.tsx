@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react'
 import Editor from '@monaco-editor/react'
+import { useTheme } from '../hooks/useTheme'
 
 const snippets = [
   {
@@ -47,25 +48,33 @@ export default function Playground() {
   const [output, setOutput] = useState<string>('Run code to see output here.')
   const [running, setRunning] = useState(false)
   const [selectedSnippet, setSelectedSnippet] = useState(snippets[0].label)
+  const theme = useTheme()
 
   const activeSnippet = useMemo(
     () => snippets.find(snippet => snippet.label === selectedSnippet) || snippets[0],
     [selectedSnippet]
   )
 
-  async function runWith(endpoint: string) {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code })
-    })
-    const data = await response.json()
+  async function runWith(endpoint: string, timeoutMs: number) {
+    const controller = new AbortController()
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
+    try {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+        signal: controller.signal
+      })
+      const data = await response.json()
 
-    if (!response.ok) {
-      throw new Error(data.error || data.detail || 'Run failed')
+      if (!response.ok) {
+        throw new Error(data.error || data.detail || 'Run failed')
+      }
+
+      return data.output || JSON.stringify(data, null, 2)
+    } finally {
+      clearTimeout(timer)
     }
-
-    return data.output || JSON.stringify(data, null, 2)
   }
 
   async function run() {
@@ -74,12 +83,16 @@ export default function Playground() {
 
     try {
       try {
-        setOutput(await runWith('/api/run-sandbox'))
+        setOutput(await runWith('/api/run', 25000))
       } catch {
-        setOutput(await runWith('/api/run'))
+        setOutput(await runWith('/api/run-sandbox', 40000))
       }
     } catch (error) {
-      setOutput('Error: ' + String(error))
+      setOutput(
+        'Error: ' +
+          String(error) +
+          '. Make sure the backend is running and the Java compiler is on PATH.'
+      )
     } finally {
       setRunning(false)
     }
@@ -96,8 +109,8 @@ export default function Playground() {
         <div>
           <h2 className="section-title">Playground</h2>
           <p className="section-copy">
-            Try lessons in a live editor. The app prefers the sandbox runner, then falls back to
-            the local runner.
+            Try lessons in a live editor. The app prefers the local JVM runner, then falls back to
+            the sandbox runner.
           </p>
         </div>
         <div className="stacked-meta">
@@ -138,18 +151,19 @@ export default function Playground() {
             <span className="pill">Code editor</span>
             <span className="pill">Editable snippet</span>
           </div>
-          <div style={{ height: 460, borderRadius: '18px', overflow: 'hidden', border: '1px solid var(--line)' }}>
+          <div className="editor-shell" style={{ height: 620 }}>
             <Editor
               height="100%"
               defaultLanguage="java"
               value={code}
               onChange={value => setCode(value || '')}
-              theme="vs-dark"
+              theme={theme === 'dark' ? 'vs-dark' : 'light'}
               options={{
-                fontSize: 15,
+                fontSize: 16,
                 minimap: { enabled: false },
                 automaticLayout: true,
-                scrollBeyondLastLine: false
+                scrollBeyondLastLine: false,
+                padding: { top: 14, bottom: 14 }
               }}
             />
           </div>
@@ -160,7 +174,7 @@ export default function Playground() {
             <span className="pill">Console</span>
             <span className="pill">Output preview</span>
           </div>
-          <pre className="code-block" style={{ minHeight: 460, whiteSpace: 'pre-wrap' }}>
+          <pre className="code-block" style={{ minHeight: 620, whiteSpace: 'pre-wrap' }}>
             <code>{output}</code>
           </pre>
           <p className="section-copy" style={{ marginTop: '1rem' }}>

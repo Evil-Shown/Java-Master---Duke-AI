@@ -46,7 +46,7 @@ export default function Games() {
           <h2 className="section-title">Java Games</h2>
           <p className="section-copy">Practice recognition and debugging in short, repeatable rounds.</p>
         </div>
-        <div className="stacked-meta"><span className="pill">Score {score}</span><span className="pill">+10 XP each</span></div>
+        <div className="stacked-meta"><span className="pill score-chip">Score {score}</span><span className="pill">+10 XP each</span></div>
       </div>
       <div className="split-actions">
         <button className={mode === 'output' ? 'primary-button' : 'secondary-button'} onClick={() => {setMode('output'); setIndex(0); setFeedback('')}}>Guess the output</button>

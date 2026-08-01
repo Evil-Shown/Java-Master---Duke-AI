@@ -9,13 +9,40 @@ const starterPrompts = [
   'What are the common mistakes?'
 ]
 
-export default function Duke({ lessonId }: { lessonId?: string }) {
-  const [open, setOpen] = useState(true)
+function SendIcon({ size = 16 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="22" y1="2" x2="11" y2="13" />
+      <polygon points="22 2 15 22 11 13 2 9 22 2" />
+    </svg>
+  )
+}
+
+function CoffeeIcon({ size = 20 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 8h1a4 4 0 1 1 0 8h-1" />
+      <path d="M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4Z" />
+      <line x1="6" y1="2" x2="6" y2="4" />
+      <line x1="10" y1="2" x2="10" y2="4" />
+      <line x1="14" y1="2" x2="14" y2="4" />
+    </svg>
+  )
+}
+
+export default function Duke({
+  lessonId,
+  open,
+  onToggle
+}: {
+  lessonId?: string
+  open: boolean
+  onToggle: () => void
+}) {
   const [msgs, setMsgs] = useState<Msg[]>([
     {
       from: 'duke',
-      text:
-        "Hi, I'm Duke. Ask me about Java, the JVM, OOP, concurrency, or the lesson you are on."
+      text: "Hi, I'm Duke. Ask me about Java, the JVM, OOP, concurrency, or the lesson you are on."
     }
   ])
   const [text, setText] = useState('')
@@ -26,11 +53,11 @@ export default function Duke({ lessonId }: { lessonId?: string }) {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight
     }
-  }, [msgs, open])
+  }, [msgs, open, sending])
 
   async function send(message = text) {
     const trimmed = message.trim()
-    if (!trimmed) return
+    if (!trimmed || sending) return
 
     setMsgs(current => [...current, { from: 'user', text: trimmed }])
     setText('')
@@ -60,13 +87,18 @@ export default function Duke({ lessonId }: { lessonId?: string }) {
   return (
     <aside className="duke-shell">
       <div className="duke-header">
-        <div>
-          <div className="duke-title">Duke Mentor</div>
-          <div className="duke-subtitle">
-            {lessonId ? `Context: ${lessonId}` : 'Lesson-aware Java tutor'}
+        <div className="duke-identity">
+          <div className="duke-avatar">
+            <CoffeeIcon size={20} />
+          </div>
+          <div style={{ minWidth: 0 }}>
+            <div className="duke-title">Duke Mentor</div>
+            <div className="duke-subtitle">
+              {lessonId ? `Context: ${lessonId}` : 'Lesson-aware Java tutor'}
+            </div>
           </div>
         </div>
-        <button className="ghost-button" onClick={() => setOpen(state => !state)}>
+        <button className="ghost-button" onClick={onToggle}>
           {open ? 'Hide' : 'Show'}
         </button>
       </div>
@@ -79,6 +111,15 @@ export default function Duke({ lessonId }: { lessonId?: string }) {
                 {msg.text}
               </div>
             ))}
+            {sending && (
+              <div className="message duke">
+                <span className="typing-dots">
+                  <i />
+                  <i />
+                  <i />
+                </span>
+              </div>
+            )}
           </div>
 
           <div className="duke-composer">
@@ -103,10 +144,10 @@ export default function Duke({ lessonId }: { lessonId?: string }) {
             />
 
             <div className="duke-composer-actions">
-              <button className="primary-button" onClick={() => send()} disabled={sending}>
-                {sending ? 'Thinking...' : 'Send'}
+              <span className="status-line">Shift + Enter for a new line</span>
+              <button className="send-button" onClick={() => send()} disabled={sending} aria-label="Send message">
+                <SendIcon />
               </button>
-              <span className="status-line">Use Shift + Enter for a new line.</span>
             </div>
           </div>
         </>
